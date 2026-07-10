@@ -2,5 +2,6 @@
 from src.job_posting_server import fetch_job_posting
 
 # using a real job posting url to test with - swap this for any real posting
-result = fetch_job_posting("https://www.python.org/about/")
-print(result[:1000])  # just print the first bit so it's not a wall of text
+result = fetch_job_posting("https://careers.epic.com/jobs/technical-solutions-engineer/")
+print(result[:1500])
+
