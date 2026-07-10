@@ -1,0 +1,54 @@
+{
+  "skills": {
+    "languages": ["Python", "Java", "JavaScript", "HTML", "CSS"],
+    "frameworks": ["React", "Vite", "Tailwind CSS", "Node.js", "pdfjs-dist", "Anthropic SDK"],
+    "machine_learning": ["TensorFlow/Keras", "scikit-learn", "librosa", "Pandas", "NumPy", "CNNs"],
+    "ai_and_apis": ["Anthropic Claude API", "REST APIs", "Prompt Engineering", "Multi-turn Conversations", "Vision/Image APIs"],
+    "tools": ["Git", "GitHub", "VS Code", "Vercel", "Streamlit Cloud", "Kaggle API", "Bash/Shell Scripting", "Python Virtual Environments"]
+  },
+  "projects": [
+    {
+      "name": "AI Voice Detector",
+      "tech": ["Python", "TensorFlow/Keras", "librosa", "scikit-learn", "Streamlit"],
+      "description": "Built a CNN on mel spectrograms to classify real vs AI-generated voice clips, reaching 92% test accuracy. Diagnosed and fixed model overfitting with dropout and early stopping. Ran a rigorous generalization test against an unseen voice generator that exposed a real limitation in the model. Deployed a live demo on Streamlit Cloud."
+    },
+    {
+      "name": "LeetCode Explainer",
+      "tech": ["React", "Claude API", "Vite", "Tailwind CSS", "Vision API"],
+      "description": "Built an AI-powered LeetCode tutor that analyzes attempted solutions, identifies bugs, explains the optimal algorithm, and teaches the underlying CS concept. Features multi-image drag-and-drop screenshot upload and a context-aware follow-up chatbot."
+    },
+    {
+      "name": "AI Resume Tailor",
+      "tech": ["React", "Claude API", "Vite", "pdfjs-dist"],
+      "description": "Developed a resume tailoring tool that analyzes a resume PDF against a job description and returns rewritten bullet points with explanations. Implemented drag-and-drop PDF upload, structured JSON parsing, and a persistent chat interface."
+    },
+    {
+      "name": "AI Study Buddy",
+      "tech": ["React", "Claude API", "Vite", "pdfjs-dist", "Multi-turn Chat"],
+      "description": "Engineered a study assistant that accepts PDF lecture uploads and delivers adaptive concept explanations and Socratic quizzes across a persistent multi-turn chat interface."
+    },
+    {
+      "name": "Sign Language Learning App",
+      "tech": ["JavaScript", "Code.org App Lab"],
+      "description": "Developed an interactive application using event-driven programming with structured quiz and practice systems."
+    }
+  ],
+  "leadership": [
+    {
+      "name": "UConn Surya - Competitive Collegiate Dance Team",
+      "role": "Captain",
+      "description": "Lead a 20+ member team managing recruitment, scheduling, choreography, and large-scale showcase production logistics."
+    },
+    {
+      "name": "Rang de Storrs",
+      "role": "Judging + Technology Chair",
+      "description": "Developed and maintained the event website and application, managed technical systems including lighting and sound."
+    }
+  ],
+  "education": {
+    "school": "University of Connecticut",
+    "degree": "B.S. Computer Science and Engineering",
+    "gpa": "4.00",
+    "expected_graduation": "May 2029"
+  }
+}
