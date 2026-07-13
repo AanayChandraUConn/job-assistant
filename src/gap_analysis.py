@@ -14,13 +14,13 @@ def load_my_data():
         return json.load(f)
 
 
-def analyze_gaps(job_posting_text: str) -> str:
+def analyze_gaps(job_posting_text: str, background_data: dict = None) -> str:
     """
     specifically looks for what the posting wants that isn't clearly backed
-    up by my real data - separate from match_experience, which focuses on
+    up by real data - separate from match_experience, which focuses on
     what DOES match. this one's job is just finding the honest gaps
     """
-    my_data = load_my_data()
+    my_data = background_data if background_data else load_my_data()
     my_data_str = json.dumps(my_data, indent=2)
 
     prompt = f"""Here is a job posting:
@@ -39,7 +39,18 @@ Do a gap analysis. Specifically:
 3. Be honest - don't downplay real gaps just to be encouraging, but also
    don't invent gaps that aren't actually there
 
-Keep it concise and direct.
+CRITICAL - if the posting mentions ANY date, timeline, or graduation
+requirement (like "must graduate between X and Y" or "available starting
+[date]"), work through this VERY carefully and explicitly:
+- State the exact requirement as written in the posting
+- State my exact relevant date from my background (e.g. expected graduation)
+- Explicitly compare the two step by step, in words, before concluding
+  whether I meet it or not
+- Do not just assert "eligible" or "not eligible" without showing this
+  comparison - date logic errors are easy to make, so be extra careful and
+  literal here, don't round or approximate
+
+Keep the rest concise and direct.
 """
 
     response = client.messages.create(
@@ -56,6 +67,7 @@ if __name__ == "__main__":
     Senior Backend Engineer
     5+ years experience with distributed systems, Kubernetes, and Go.
     Must have led a team of engineers. Healthcare industry experience preferred.
+    Must graduate between September 2027 and July 2028.
     """
 
     result = analyze_gaps(test_posting)

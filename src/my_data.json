@@ -50,5 +50,12 @@
     "degree": "B.S. Computer Science and Engineering",
     "gpa": "4.00",
     "expected_graduation": "May 2029"
+  },
+  "contact": {
+    "name": "Aanay Chandra",
+    "phone": "(203) 808-0720",
+    "address": "available upon request",
+    "city_state_zip": "Rocky Hill, CT",
+    "email": "aanaychandrauconn@gmail.com"
   }
 }

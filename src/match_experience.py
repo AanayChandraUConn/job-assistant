@@ -10,20 +10,17 @@ client = Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 
 
 def load_my_data():
-    # just reads my structured resume data back in
     with open("src/my_data.json") as f:
         return json.load(f)
 
 
-def match_experience(job_posting_text: str) -> str:
+def match_experience(job_posting_text: str, background_data: dict = None) -> str:
     """
-    takes the job posting text and my resume data, and asks claude to figure out
+    takes the job posting text and resume data, and asks claude to figure out
     which specific skills/projects are actually relevant - this is the context
     management part, not just sending everything every time
     """
-    my_data = load_my_data()
-
-    # turn my data into a string so it can go into the prompt
+    my_data = background_data if background_data else load_my_data()
     my_data_str = json.dumps(my_data, indent=2)
 
     prompt = f"""Here is a job posting:
@@ -35,9 +32,16 @@ Here is my background (skills, projects, leadership):
 {my_data_str}
 
 Based on the job posting, tell me:
-1. Which of my specific projects are most relevant, and why (be specific, reference actual project names)
-2. Which of my specific skills match what they're looking for
-3. Keep it concise - just the relevant stuff, don't repeat my whole resume back to me
+1. Start with a clear one-line verdict: "STRONG MATCH", "PARTIAL MATCH", or
+   "WEAK MATCH" - be honest here, don't default to a positive spin just to
+   be encouraging. If the role requires years of professional experience I
+   don't have, a completely different tech stack, or a seniority level far
+   beyond mine, say WEAK MATCH plainly.
+2. Which of my specific projects are most relevant, and why (be specific,
+   reference actual project names) - if truly nothing is relevant, say so
+   instead of stretching a weak connection
+3. Which of my specific skills match what they're looking for
+4. Keep it concise - just the relevant stuff, don't repeat my whole resume back to me
 """
 
     response = client.messages.create(
@@ -50,7 +54,6 @@ Based on the job posting, tell me:
 
 
 if __name__ == "__main__":
-    # quick test with a fake job posting
     test_posting = """
     Software Engineering Intern - Summer 2027
     We're looking for someone with experience in Python, machine learning,
