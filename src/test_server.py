@@ -1,7 +1,7 @@
-# quick script just to test the job posting tool works before hooking up an agent to it
+# quick script to make sure the job posting tool actually works before
+# hooking anything else up to it
 from src.job_posting_server import get_job_posting
 
-# test 1: a url that should work fine
 print("=== testing with url ===")
 result = get_job_posting(url="https://careers.epic.com/jobs/technical-solutions-engineer/")
 print(result[:500])

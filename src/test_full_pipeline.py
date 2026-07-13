@@ -1,4 +1,4 @@
-# stress testing everything built so far against real job postings
+# stress testing everything against real job postings, not just my test ones
 from src.job_posting_server import get_job_posting
 from src.match_experience import match_experience
 from src.gap_analysis import analyze_gaps
@@ -11,6 +11,7 @@ def run_full_analysis(url: str = "", pasted_text: str = ""):
 
     posting = get_job_posting(url=url, pasted_text=pasted_text)
 
+    # bail early if fetching failed, no reason to try analyzing garbage
     if posting.startswith("error") or posting.startswith("couldn't"):
         print(f"FETCH FAILED: {posting}")
         return
@@ -27,7 +28,6 @@ def run_full_analysis(url: str = "", pasted_text: str = ""):
 
 
 if __name__ == "__main__":
-    # testing against a few different real postings, different companies and platforms
     run_full_analysis(url="https://careers.epic.com/jobs/technical-solutions-engineer/")
     run_full_analysis(url="https://jobs.lever.co/palantir/e27af7ab-41fc-40c9-b31d-02c6cb1c505c")
     run_full_analysis(url="https://jobs.lever.co/nominal/f2673e2a-381e-49eb-bb34-7633ac0d5ea4")

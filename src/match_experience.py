@@ -1,5 +1,5 @@
-# figures out which of my skills/projects are actually relevant to a given job posting
-# instead of just dumping my whole resume at the ai every time
+# looks at a job posting and figures out which of my skills/projects are
+# actually relevant, instead of just sending my whole resume to claude every time
 import json
 import os
 from anthropic import Anthropic
@@ -16,9 +16,9 @@ def load_my_data():
 
 def match_experience(job_posting_text: str, background_data: dict = None) -> str:
     """
-    takes the job posting text and resume data, and asks claude to figure out
-    which specific skills/projects are actually relevant - this is the context
-    management part, not just sending everything every time
+    compares the job posting against someone's background and tells you what's
+    relevant. background_data lets this work for other people too, not just me -
+    if nothing's passed in it just uses my own data.json
     """
     my_data = background_data if background_data else load_my_data()
     my_data_str = json.dumps(my_data, indent=2)
@@ -33,15 +33,13 @@ Here is my background (skills, projects, leadership):
 
 Based on the job posting, tell me:
 1. Start with a clear one-line verdict: "STRONG MATCH", "PARTIAL MATCH", or
-   "WEAK MATCH" - be honest here, don't default to a positive spin just to
-   be encouraging. If the role requires years of professional experience I
-   don't have, a completely different tech stack, or a seniority level far
-   beyond mine, say WEAK MATCH plainly.
-2. Which of my specific projects are most relevant, and why (be specific,
-   reference actual project names) - if truly nothing is relevant, say so
-   instead of stretching a weak connection
+   "WEAK MATCH" - be honest, don't just say something positive to be nice.
+   If the role needs way more experience or a totally different tech stack,
+   just say WEAK MATCH.
+2. Which of my specific projects are most relevant, and why (use actual
+   project names) - if nothing's really relevant just say that
 3. Which of my specific skills match what they're looking for
-4. Keep it concise - just the relevant stuff, don't repeat my whole resume back to me
+4. Keep it short - just the relevant stuff, don't repeat my whole resume back
 """
 
     response = client.messages.create(

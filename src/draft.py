@@ -1,6 +1,5 @@
-# handles generating a tailored draft (full cover letter) and then
-# checking it against real data to catch any hallucinated claims before
-# showing it to the user
+# writes a full cover letter based on the job posting + my real data, then
+# double checks itself for stuff it might've made up before calling it done
 import json
 import os
 from datetime import date
@@ -17,7 +16,7 @@ def load_my_data():
 
 
 def generate_draft(job_posting_text: str, background_data: dict = None) -> str:
-    # writes a full, properly formatted cover letter based on real data only
+    # writes the actual cover letter, properly formatted, using only real info
     my_data = background_data if background_data else load_my_data()
     my_data_str = json.dumps(my_data, indent=2)
     today = date.today().strftime("%B %d, %Y")
@@ -31,12 +30,10 @@ Here is my real background (only use facts from here, don't make anything up):
 {my_data_str}
 
 Write a complete, properly formatted cover letter tailored to this posting.
-Aim for 400-450 words total, not including the header/date/greeting/signoff.
-Use 2-3 solid body paragraphs with specific, detailed examples from my
-background - don't pad with generic filler, but give real depth to the
-projects and skills you reference.
+Aim for 400-450 words, not counting the header/date/greeting/signoff.
+Use 2-3 real paragraphs with specific examples - don't pad with generic filler.
 
-Format it exactly like this, top to bottom:
+Format it like this, top to bottom:
 
 [My name from contact info]
 [My phone from contact info]
@@ -46,27 +43,26 @@ Format it exactly like this, top to bottom:
 
 {today}
 
-[Company name - figure this out from the job posting. If you can't find a
-specific company name, write "Hiring Team" instead]
-[Position title - the exact job title from the posting]
-[Company location - figure this out from the job posting if mentioned,
-otherwise leave this line out]
+[Company name - figure this out from the posting, or write "Hiring Team" if
+you can't find one]
+[Position title - the actual job title from the posting]
+[Company location if mentioned, otherwise skip this line]
 
 Dear Hiring Team,
 
-[Opening paragraph stating the role and a brief hook]
+[Opening paragraph - the role and a quick hook]
 
-[2-3 body paragraphs with real, specific experience from my background above]
+[2-3 body paragraphs with real specific experience from my background]
 
 [Closing paragraph with enthusiasm and next steps]
 
 Sincerely,
 [My name from contact info]
 
-Only reference real projects/skills from my background above - don't make anything up
-about my experience. It's fine to reasonably infer the company name/location/position
-title from the job posting text itself, since that's public information, not a fact
-about me. Keep the tone genuine and natural, not overly corporate or stiff.
+Only use real projects/skills from my background - don't make anything up
+about my experience. Company name/location/position title from the posting
+is fine to infer since that's public info, not a claim about me.
+Keep the tone genuine, not stiff and corporate sounding.
 """
 
     response = client.messages.create(
@@ -80,8 +76,8 @@ about me. Keep the tone genuine and natural, not overly corporate or stiff.
 
 def check_draft_for_hallucinations(draft_text: str, background_data: dict = None) -> str:
     """
-    this is the guardrail - asks claude to specifically check the draft against
-    real data and flag anything that seems made up or exaggerated
+    this is the safety check - a SEPARATE call that re-reads the draft and
+    looks for anything it claimed that isn't actually backed by my real data
     """
     my_data = background_data if background_data else load_my_data()
     my_data_str = json.dumps(my_data, indent=2)
@@ -90,18 +86,18 @@ def check_draft_for_hallucinations(draft_text: str, background_data: dict = None
 
 {my_data_str}
 
-Here is a draft cover letter someone wrote based on this data:
+Here is a draft cover letter based on this data:
 
 {draft_text}
 
-Carefully check: does the draft make ANY claim about MY experience/skills that
-isn't actually supported by my real background above? Look for exaggerations,
-made-up experience, or skills/projects that don't exist in my data.
-(Company name/location/position title pulled from the job posting itself
-doesn't count as an issue - that's fine.)
+Check carefully: does the draft claim anything about MY experience/skills
+that isn't actually backed up by my real background above? Look for
+exaggerations or made up experience.
+(Company name/location/position title from the job posting itself doesn't
+count - that's fine, not a claim about me.)
 
 If everything checks out, just say "No issues found."
-If something is unsupported, list exactly what claim is a problem and why.
+If something's unsupported, say exactly what the problem is and why.
 """
 
     response = client.messages.create(
@@ -115,10 +111,8 @@ If something is unsupported, list exactly what claim is a problem and why.
 
 def revise_draft(current_draft: str, user_feedback: str, background_data: dict = None) -> str:
     """
-    takes the existing draft and whatever feedback the user gives (like
-    "make it shorter" or "mention my leadership experience more") and
-    revises it accordingly - this is what makes it feel like a back and
-    forth conversation instead of one-shot generation
+    takes feedback like "make it shorter" and actually edits the existing
+    draft based on that, instead of generating a totally new one from scratch
     """
     my_data = background_data if background_data else load_my_data()
     my_data_str = json.dumps(my_data, indent=2)
@@ -133,9 +127,9 @@ Here is a cover letter draft:
 
 The user wants this change: "{user_feedback}"
 
-Revise the cover letter based on this feedback. Keep everything else about the
-letter the same unless the feedback implies otherwise. Only reference real
-projects/skills from my background above - don't make anything up.
+Revise the letter based on that feedback. Keep everything else the same
+unless the feedback says otherwise. Only use real stuff from my background -
+don't make anything up.
 """
 
     response = client.messages.create(
@@ -148,6 +142,8 @@ projects/skills from my background above - don't make anything up.
 
 
 def get_draft_with_guardrail(job_posting_text: str, background_data: dict = None) -> dict:
+    # runs the draft + safety check together and packages it up. always comes
+    # back labeled as a draft, never as something "done" ready to send
     draft = generate_draft(job_posting_text, background_data=background_data)
     check_result = check_draft_for_hallucinations(draft, background_data=background_data)
 

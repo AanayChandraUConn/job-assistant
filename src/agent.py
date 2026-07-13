@@ -1,5 +1,5 @@
-# this is the actual "agent" - claude decides on its own when to use the job posting tool,
-# instead of us hardcoding the order of function calls like before
+# this is the actual "agent" part - claude decides on its own when to use
+# the job posting tool, instead of me hardcoding "first do this, then this"
 import json
 import os
 from anthropic import Anthropic
@@ -15,8 +15,8 @@ def load_my_data():
         return json.load(f)
 
 
-# this describes the tool to claude - name, what it does, and what inputs it needs
-# claude reads this description to decide WHEN it makes sense to use it
+# describes the tool to claude - what it's called, what it does, what it needs
+# claude reads this to figure out when it makes sense to actually use it
 tools = [
     {
         "name": "get_job_posting",
@@ -34,8 +34,8 @@ tools = [
 
 def run_agent(user_message: str) -> str:
     """
-    takes whatever the user says (like "here's a job link, tell me if I'm a good fit")
-    and lets claude decide on its own whether it needs to call the job posting tool
+    give it a plain message like "here's a job link, am I a good fit" and
+    let claude figure out on its own whether it needs to use the tool
     """
     my_data = load_my_data()
     my_data_str = json.dumps(my_data, indent=2)
@@ -52,7 +52,7 @@ Be specific and honest - point out both matches AND gaps, don't just flatter the
 
     messages = [{"role": "user", "content": user_message}]
 
-    # first call - claude decides if it wants to use the tool or not
+    # first ask claude - it decides whether it wants to use the tool or not
     response = client.messages.create(
         model="claude-sonnet-4-5",
         max_tokens=1500,
@@ -61,20 +61,18 @@ Be specific and honest - point out both matches AND gaps, don't just flatter the
         messages=messages
     )
 
-    # if claude decided to use a tool, we have to actually run it and send the result back
+    # if it wants to use a tool, we gotta actually run it and send the result back
     while response.stop_reason == "tool_use":
-        # find the tool call claude wants to make
         tool_use_block = next(block for block in response.content if block.type == "tool_use")
 
         print(f"[agent decided to call tool: {tool_use_block.name} with input {tool_use_block.input}]")
 
-        # actually run our real function with whatever input claude picked
         if tool_use_block.name == "get_job_posting":
             tool_result = get_job_posting(**tool_use_block.input)
         else:
             tool_result = "unknown tool"
 
-        # add claude's tool request AND our result to the conversation, then ask again
+        # add both claude's request AND our result to the convo, then ask again
         messages.append({"role": "assistant", "content": response.content})
         messages.append({
             "role": "user",
@@ -93,7 +91,7 @@ Be specific and honest - point out both matches AND gaps, don't just flatter the
             messages=messages
         )
 
-    # once claude is done using tools, grab its final text response
+    # once it's done using tools, grab its actual written response
     final_text = next((block.text for block in response.content if block.type == "text"), "")
     return final_text
 

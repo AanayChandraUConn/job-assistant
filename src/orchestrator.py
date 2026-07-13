@@ -1,5 +1,5 @@
-# ties together everything built so far into one clean set of functions
-# the app (app.py) will call these instead of talking to each piece separately
+# ties everything together into a few simple functions so app.py doesn't
+# need to know about 6 different files, just this one
 from src.job_posting_server import get_job_posting
 from src.match_experience import match_experience
 from src.gap_analysis import analyze_gaps
@@ -16,11 +16,7 @@ client = Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 
 
 def extract_text_from_pdf(pdf_file) -> str:
-    """
-    takes an uploaded pdf file and pulls out all the readable text from it,
-    page by page, so it can be fed into structure_background just like
-    pasted text would be
-    """
+    # grabs all the text out of an uploaded pdf, page by page
     reader = PdfReader(pdf_file)
     text_parts = []
     for page in reader.pages:
@@ -30,9 +26,8 @@ def extract_text_from_pdf(pdf_file) -> str:
 
 def structure_background(raw_text: str) -> dict:
     """
-    takes whatever background text a user provides (could be messy, could
-    be a full resume, could just be a list of skills) and asks claude to
-    organize it into the same structured format my_data.json uses
+    takes whatever messy background text someone pastes/uploads and asks
+    claude to organize it into the same json structure my own data uses
     """
     prompt = f"""Here is someone's resume/background info, pasted in as raw text:
 
@@ -68,6 +63,7 @@ Only output the JSON, nothing else - no explanation before or after.
         messages=[{"role": "user", "content": prompt}]
     )
 
+    # claude sometimes wraps json in markdown code blocks, gotta strip that off
     text = response.content[0].text.strip()
     if text.startswith("```"):
         text = text.split("```")[1]

@@ -1,7 +1,6 @@
-# searches the web for open, currently relevant job postings based on
-# background info. points directly at specific, verified tracking repos
-# instead of letting claude guess a repo name pattern, since guessed repo
-# names were frequently wrong/nonexistent
+# searches the web for open roles that fit someone's background. points at
+# specific verified tracking repos instead of letting claude guess repo names,
+# since guessed ones were often just wrong/didn't exist
 import json
 import os
 from datetime import date
@@ -19,10 +18,9 @@ def load_my_data():
 
 def find_related_jobs(current_posting_text: str = "", background_data: dict = None, preference: str = "") -> str:
     """
-    searches the web for open roles that fit a background. current_posting_text
-    is optional extra context if someone's currently looking at a specific posting.
-    preference is an optional user-specified filter like "Summer 2027 internships"
-    or "full-time new grad roles" - if given, this takes priority over auto-guessing
+    searches for open roles matching a background. preference lets someone
+    say exactly what they want (like "Summer 2027 internships") instead of
+    relying on auto-guessing which is more likely to get it wrong
     """
     my_data = background_data if background_data else load_my_data()
     skills_summary = ", ".join(my_data["skills"]["languages"] + my_data["skills"]["machine_learning"])
@@ -35,11 +33,12 @@ def find_related_jobs(current_posting_text: str = "", background_data: dict = No
 
     if preference.strip():
         timing_instruction = f"""The user specifically wants: "{preference}"
-Search for exactly that - don't second-guess or override what they asked for."""
+Search for exactly that - don't second-guess what they asked for."""
     else:
-        timing_instruction = f"""No specific preference was given, so figure out which internship
-cycle (which upcoming summer) is actually relevant right now, based on today's
-date ({today}) and expected graduation ({grad_info})."""
+        timing_instruction = f"""No preference given, so figure out which internship cycle
+(which summer) is actually relevant right now based on today's date ({today})
+and expected graduation ({grad_info}). If it's the middle of a summer already,
+that cycle's basically over and next summer is what should be searched for."""
 
     prompt = f"""Today's actual date is {today}.
 Expected graduation: {grad_info}
@@ -50,34 +49,32 @@ I'm a Computer Science student looking for internships/entry-level roles.
 
 {timing_instruction}
 
-Search these SPECIFIC, VERIFIED tracking repos (use exactly these URLs, do not
-guess at other repo names, these are the correct ones):
+Search these SPECIFIC, VERIFIED tracking repos (use exactly these, don't
+guess other repo names, these are the correct ones):
 - https://github.com/vanshb03/Summer2027-Internships
 - https://github.com/sndsh404/summer-2027-internships
 - https://github.com/speedyapply/2027-AI-College-Jobs
 
 IMPORTANT - check timing carefully before including a role:
-- Compare the program's stated dates against today's actual date. If a
-  program's start date has already passed, or it's for the wrong cycle
-  entirely, don't include it.
-- Job links do go dead often - if you can't reasonably confirm a role still
-  looks active based on what the source says, say so plainly instead of
-  presenting it with confidence.
+- Compare the program's dates against today's actual date. If it's already
+  passed or it's for the wrong cycle, don't include it.
+- Links go dead a lot - if you can't confirm a role still looks active, just
+  say so instead of acting confident about it.
 
-Find 3-5 specific roles that fit this background AND whose timing makes sense.
+Find 3-5 roles that fit this background AND whose timing actually makes sense.
 
-CRITICAL - format your entire response using EXACTLY this structure, nothing else,
-no extra headers or sections, no bold giant titles - just this, repeated for each role:
+CRITICAL - use EXACTLY this format for every role, nothing else, no giant
+headers or extra sections:
 
 1. [Job Title] at [Company]
-   Link: [url, or "not available" if none]
+   Link: [url, or "not available"]
    Why it fits: [one or two plain sentences]
-   Status: [your honest confidence it's still open, one short sentence]
+   Status: [your honest confidence it's still open]
 
-(continue this exact pattern for each role found, 3-5 total)
+(repeat this exact pattern for each role, 3-5 total)
 
-If you want to mention tracking resources used, put that in one plain sentence
-at the very end, not as its own big section.
+Better to give fewer honestly-assessed roles than a padded list of stuff
+that's probably already closed.
 """
 
     response = client.messages.create(

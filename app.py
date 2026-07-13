@@ -1,4 +1,14 @@
+# the actual streamlit app - this is what glues the ui to all the backend
+# stuff in src/orchestrator.py
+import os
 import streamlit as st
+
+# streamlit cloud stores secrets differently than my local .env file, so this
+# copies the secret over to a normal env var so the rest of my code doesn't
+# need to care whether it's running locally or deployed
+if "ANTHROPIC_API_KEY" in st.secrets:
+    os.environ["ANTHROPIC_API_KEY"] = st.secrets["ANTHROPIC_API_KEY"]
+
 from src.orchestrator import (
     analyze_posting, create_draft, revise_current_draft,
     get_related_jobs, structure_background, extract_text_from_pdf
@@ -6,7 +16,8 @@ from src.orchestrator import (
 
 st.set_page_config(page_title="Job Application Assistant", page_icon="📋", layout="wide")
 
-# custom css for a bit more color/personality than streamlit's default look
+# a bit of custom css so the app has some actual color instead of being
+# plain black and white boxes everywhere
 st.markdown("""
 <style>
 .step-card {
@@ -59,6 +70,8 @@ with st.expander("ℹ️ How to use this"):
     for you to review and use yourself.
     """)
 
+# session_state remembers stuff across button clicks, since streamlit reruns
+# the whole script top to bottom every single time you click anything
 for key in ["background_data", "analysis", "draft"]:
     if key not in st.session_state:
         st.session_state[key] = None
@@ -131,6 +144,8 @@ if st.session_state.background_data:
         else:
             st.divider()
 
+            # peek at the first line of the match text to figure out the
+            # overall verdict, so we can color code it
             match_text = result["match"]
             first_line = match_text.strip().split("\n")[0].upper()
 
