@@ -166,7 +166,7 @@ with st.expander("How this works"):
 
 st.markdown("---")
 
-# ---------------------------------------------------------------- step 1
+# step 1: background
 if st.session_state.step == 1:
     st.markdown('<div class="panel-heading"><span class="meta-label">Step 01</span></div>', unsafe_allow_html=True)
     st.markdown('<h2 class="display">Your background</h2>', unsafe_allow_html=True)
@@ -191,7 +191,7 @@ if st.session_state.step == 1:
         else:
             st.warning("Please upload a resume or paste your background first.")
 
-# ---------------------------------------------------------------- step 2
+# step 2: job posting
 elif st.session_state.step == 2:
     st.markdown('<div class="panel-heading"><span class="meta-label">Step 02</span></div>', unsafe_allow_html=True)
     st.markdown('<h2 class="display">Job posting</h2>', unsafe_allow_html=True)
@@ -282,7 +282,7 @@ elif st.session_state.step == 2:
                             )
                             st.write(related)
 
-# ---------------------------------------------------------------- step 3
+# step 3: draft
 elif st.session_state.step == 3:
     st.markdown('<div class="panel-heading"><span class="meta-label">Step 03</span></div>', unsafe_allow_html=True)
     st.markdown('<h2 class="display">Draft cover letter</h2>', unsafe_allow_html=True)

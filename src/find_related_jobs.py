@@ -55,7 +55,7 @@ guess other repo names, these are the correct ones):
 - https://github.com/sndsh404/summer-2027-internships
 - https://github.com/speedyapply/2027-AI-College-Jobs
 
-IMPORTANT - check timing carefully before including a role:
+Check timing carefully before including a role:
 - Compare the program's dates against today's actual date. If it's already
   passed or it's for the wrong cycle, don't include it.
 - Links go dead a lot - if you can't confirm a role still looks active, just
@@ -63,8 +63,8 @@ IMPORTANT - check timing carefully before including a role:
 
 Find 3-5 roles that fit this background AND whose timing actually makes sense.
 
-CRITICAL - use EXACTLY this format for every role, nothing else, no giant
-headers or extra sections:
+Use exactly this format for every role, nothing else, no giant headers or
+extra sections:
 
 1. [Job Title] at [Company]
    Link: [url, or "not available"]

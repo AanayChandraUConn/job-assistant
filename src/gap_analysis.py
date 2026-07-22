@@ -39,13 +39,14 @@ Do a gap analysis. Specifically:
 3. Be honest - don't sugarcoat real gaps, but also don't make up gaps that
    aren't actually there
 
-CRITICAL - if the posting mentions ANY date, timeline, or graduation
-requirement (like "must graduate between X and Y"), be really careful here:
-- Write out the exact requirement from the posting
-- Write out my exact relevant date from my background
-- Actually compare the two step by step in words before deciding if I meet it
-- Don't just say "eligible" or "not eligible" without showing that comparison -
-  it's easy to mess up date math, so go slow and literal here
+One thing to be really careful about: if the posting mentions any date,
+timeline, or graduation requirement (like "must graduate between X and Y"),
+don't rush it -
+- write out the exact requirement from the posting
+- write out my exact relevant date from my background
+- actually compare the two step by step in words before deciding if I meet it
+- don't just say "eligible" or "not eligible" without showing that comparison,
+  since it's really easy to mess up date math if you don't slow down here
 
 Keep the rest short and to the point.
 """
