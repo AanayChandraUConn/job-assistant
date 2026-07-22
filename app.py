@@ -14,51 +14,146 @@ from src.orchestrator import (
     get_related_jobs, structure_background, extract_text_from_pdf
 )
 
-st.set_page_config(page_title="Job Application Assistant", page_icon="📋", layout="wide")
+st.set_page_config(page_title="Job Application Assistant", page_icon="◆", layout="centered")
 
-# a bit of custom css so the app has some actual color instead of being
-# plain black and white boxes everywhere
+# type pairing: Fraunces (a serif with real character) for headings, Plex Sans
+# for body copy, Plex Mono for labels/chrome - anything but default system sans
 st.markdown("""
 <style>
-.step-card {
-    background-color: #FFFFFF;
-    border-radius: 12px;
-    padding: 1.5rem;
-    border: 2px solid #E0E7FF;
-    margin-bottom: 1rem;
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+html, body, [class*="css"] { font-family: 'IBM Plex Sans', sans-serif; }
+
+.stApp { background-color: #F4EFE4; }
+
+h1, h2, h3, h4 {
+    font-family: 'IBM Plex Sans', sans-serif !important;
+    font-weight: 600 !important;
+    font-size: 1.05rem !important;
+    color: #201D17;
 }
-.match-card {
-    background-color: #ECFDF5;
-    border-radius: 12px;
-    padding: 1.2rem;
-    border: 2px solid #A7F3D0;
+
+h1.display, h2.display, h3.display, h4.display {
+    font-family: 'Fraunces', serif !important;
+    font-weight: 600 !important;
+    letter-spacing: -0.01em;
 }
-.gap-card {
-    background-color: #FFFBEB;
-    border-radius: 12px;
-    padding: 1.2rem;
-    border: 2px solid #FDE68A;
+h1.display { font-size: 2.75rem !important; }
+h2.display { font-size: 1.9rem !important; }
+
+p, li, label, .stMarkdown { color: #201D17; }
+
+[data-testid="stSidebar"] {
+    background-color: #1E1B16;
+    border-right: 1px solid #343026;
 }
-.draft-card {
-    background-color: #EFF6FF;
-    border-radius: 12px;
-    padding: 1.5rem;
-    border: 2px solid #BFDBFE;
+[data-testid="stSidebar"] * { color: #D9D2C2 !important; }
+[data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 {
+    font-family: 'Fraunces', serif !important;
+    color: #F4EFE4 !important;
 }
-h1 {
-    color: #1E3A8A;
+[data-testid="stSidebar"] .stButton button {
+    background-color: transparent;
+    border: none;
+    text-align: left;
+    width: 100%;
 }
+[data-testid="stSidebar"] .stButton button:hover { color: #F4EFE4 !important; }
+[data-testid="stSidebar"] .stButton button:disabled { opacity: 0.45; }
+
+.meta-label {
+    font-family: 'IBM Plex Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-size: 0.72rem;
+    color: #6B6553;
+}
+
+.stButton button, .stDownloadButton button {
+    font-family: 'IBM Plex Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.75rem;
+    border-radius: 2px;
+    border: 1px solid #201D17;
+    background-color: transparent;
+}
+.stButton button p, .stButton button div, .stDownloadButton button p {
+    color: #201D17;
+}
+.stButton button[kind="primary"] {
+    background-color: #201D17;
+}
+.stButton button[kind="primary"] p, .stButton button[kind="primary"] div {
+    color: #F4EFE4;
+}
+.stButton button:hover {
+    background-color: #201D17;
+    border-color: #201D17;
+}
+.stButton button:hover p, .stButton button:hover div {
+    color: #F4EFE4 !important;
+}
+
+hr { border-top: 1px solid #D9D2C2; }
+
+[data-testid="stExpander"] {
+    border: 1px solid #D9D2C2;
+    border-radius: 2px;
+    background-color: #EFE9DA;
+}
+
+.panel-heading {
+    border-top: 3px solid #201D17;
+    padding-top: 0.6rem;
+    margin-top: 1.4rem;
+    margin-bottom: 0.8rem;
+}
+
+.verdict {
+    border-left: 4px solid;
+    padding: 0.55rem 1rem;
+    font-family: 'IBM Plex Mono', monospace;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-size: 0.82rem;
+    margin: 1rem 0 1.4rem 0;
+}
+.verdict-strong { border-color: #3F6C4A; background-color: #E8EFE4; color: #2C4A33; }
+.verdict-partial { border-color: #B8860B; background-color: #F3EBD8; color: #7A5C0C; }
+.verdict-weak { border-color: #A6432A; background-color: #F3E4DD; color: #7A3120; }
+
+.col-divider { border-left: 1px solid #D9D2C2; padding-left: 1.4rem; }
 </style>
 """, unsafe_allow_html=True)
 
-header_col1, header_col2 = st.columns([3, 1])
-with header_col1:
-    st.title("📋 Job Application Assistant")
-    st.caption("Built by Aanay Chandra · [GitHub repo](https://github.com/AanayChandraUConn/job-assistant)")
-with header_col2:
-    st.metric(label="Status", value="Ready to analyze")
+# session_state remembers stuff across button clicks, since streamlit reruns
+# the whole script top to bottom every single time you click anything
+defaults = {
+    "background_data": None, "analysis": None, "draft": None,
+    "step": 1, "max_step": 1,
+}
+for key, value in defaults.items():
+    if key not in st.session_state:
+        st.session_state[key] = value
 
-with st.expander("ℹ️ How to use this"):
+STEPS = ["Background", "Job Posting", "Draft"]
+
+with st.sidebar:
+    st.markdown('<div class="meta-label">Job Application Assistant</div>', unsafe_allow_html=True)
+    st.markdown("### Aanay Chandra")
+    st.caption("[github.com/AanayChandraUConn/job-assistant](https://github.com/AanayChandraUConn/job-assistant)")
+    st.markdown("---")
+    for i, label in enumerate(STEPS, start=1):
+        marker = "▸" if st.session_state.step == i else ("■" if i < st.session_state.max_step or (i == st.session_state.max_step and st.session_state.step != i) else "□")
+        if st.button(f"{i:02d}  {marker}  {label}", key=f"nav_{i}", disabled=i > st.session_state.max_step):
+            st.session_state.step = i
+            st.rerun()
+
+st.markdown('<h1 class="display">Job Application Assistant</h1>', unsafe_allow_html=True)
+st.caption("Draft a tailored cover letter and see where your background lines up with a posting - nothing is submitted automatically.")
+
+with st.expander("How this works"):
     st.write("""
     **Step 1:** Upload your resume as a PDF, or paste your background info directly.
 
@@ -66,49 +161,40 @@ with st.expander("ℹ️ How to use this"):
     career pages), or paste the job description text directly if it's behind a
     login (like LinkedIn).
 
-    Nothing here gets submitted anywhere automatically - everything is a draft
-    for you to review and use yourself.
+    Everything produced here is a draft for you to review and use yourself.
     """)
 
-# session_state remembers stuff across button clicks, since streamlit reruns
-# the whole script top to bottom every single time you click anything
-for key in ["background_data", "analysis", "draft"]:
-    if key not in st.session_state:
-        st.session_state[key] = None
+st.markdown("---")
 
-st.divider()
+# ---------------------------------------------------------------- step 1
+if st.session_state.step == 1:
+    st.markdown('<div class="panel-heading"><span class="meta-label">Step 01</span></div>', unsafe_allow_html=True)
+    st.markdown('<h2 class="display">Your background</h2>', unsafe_allow_html=True)
 
-st.markdown('<div class="step-card">', unsafe_allow_html=True)
-st.subheader("📎 Step 1: Your background")
+    upload_method = st.radio("How would you like to provide your background?", ["Upload PDF resume", "Paste text"], horizontal=True)
 
-upload_method = st.radio("How would you like to provide your background?", ["Upload PDF resume", "Paste text"], horizontal=True)
-
-background_input = ""
-
-if upload_method == "Upload PDF resume":
-    uploaded_pdf = st.file_uploader("Upload your resume", type=["pdf"])
-    if uploaded_pdf is not None:
-        background_input = extract_text_from_pdf(uploaded_pdf)
-else:
-    background_input = st.text_area(
-        "Paste your resume/background info here",
-        height=150
-    )
-
-if st.button("Process my background", type="primary"):
-    if background_input.strip():
-        with st.spinner("Organizing your info..."):
-            st.session_state.background_data = structure_background(background_input)
-            st.success("Background processed! Continue to Step 2 below.")
+    background_input = ""
+    if upload_method == "Upload PDF resume":
+        uploaded_pdf = st.file_uploader("Upload your resume", type=["pdf"])
+        if uploaded_pdf is not None:
+            background_input = extract_text_from_pdf(uploaded_pdf)
     else:
-        st.warning("Please upload a resume or paste your background first.")
-st.markdown('</div>', unsafe_allow_html=True)
+        background_input = st.text_area("Paste your resume/background info here", height=150)
 
-if st.session_state.background_data:
-    st.divider()
+    if st.button("Process background", type="primary"):
+        if background_input.strip():
+            with st.spinner("Organizing your info..."):
+                st.session_state.background_data = structure_background(background_input)
+                st.session_state.step = 2
+                st.session_state.max_step = max(st.session_state.max_step, 2)
+                st.rerun()
+        else:
+            st.warning("Please upload a resume or paste your background first.")
 
-    st.markdown('<div class="step-card">', unsafe_allow_html=True)
-    st.subheader("💼 Step 2: Job posting")
+# ---------------------------------------------------------------- step 2
+elif st.session_state.step == 2:
+    st.markdown('<div class="panel-heading"><span class="meta-label">Step 02</span></div>', unsafe_allow_html=True)
+    st.markdown('<h2 class="display">Job posting</h2>', unsafe_allow_html=True)
 
     input_method = st.radio("How are you providing the job posting?", ["URL", "Paste text"], horizontal=True)
 
@@ -123,8 +209,7 @@ if st.session_state.background_data:
     with col_b:
         st.write("")
         st.write("")
-        analyze_clicked = st.button("🔍 Analyze", type="primary", use_container_width=True)
-    st.markdown('</div>', unsafe_allow_html=True)
+        analyze_clicked = st.button("Analyze", type="primary", use_container_width=True)
 
     if analyze_clicked:
         with st.spinner("Fetching and analyzing..."):
@@ -142,46 +227,49 @@ if st.session_state.background_data:
         if not result["success"]:
             st.error(result["error"])
         else:
-            st.divider()
-
-            # peek at the first line of the match text to figure out the
-            # overall verdict, so we can color code it
             match_text = result["match"]
             first_line = match_text.strip().split("\n")[0].upper()
 
             if "STRONG" in first_line:
-                st.success("### 🟢 STRONG MATCH")
+                verdict_class, verdict_label = "verdict-strong", "Strong match"
             elif "WEAK" in first_line:
-                st.error("### 🔴 WEAK MATCH")
+                verdict_class, verdict_label = "verdict-weak", "Weak match"
             else:
-                st.warning("### 🟡 PARTIAL MATCH")
+                verdict_class, verdict_label = "verdict-partial", "Partial match"
+
+            st.markdown(f'<div class="verdict {verdict_class}">{verdict_label}</div>', unsafe_allow_html=True)
+
+            # drop the leading verdict line from the body text since the
+            # banner above already surfaces it
+            match_body = "\n".join(match_text.strip().split("\n")[1:]).strip()
 
             col1, col2 = st.columns(2)
             with col1:
-                st.markdown('<div class="match-card">', unsafe_allow_html=True)
-                st.markdown("#### ✅ What Matches")
-                st.write(result["match"])
-                st.markdown('</div>', unsafe_allow_html=True)
+                st.markdown("#### What matches")
+                st.write(match_body)
             with col2:
-                st.markdown('<div class="gap-card">', unsafe_allow_html=True)
-                st.markdown("#### ⚠️ Gaps to Consider")
+                st.markdown('<div class="col-divider">', unsafe_allow_html=True)
+                st.markdown("#### Gaps to consider")
                 st.write(result["gaps"])
                 st.markdown('</div>', unsafe_allow_html=True)
 
-            st.divider()
+            st.markdown("---")
 
             action_col1, action_col2 = st.columns(2)
             with action_col1:
-                if st.button("✍️ Generate Draft Cover Letter", type="primary", use_container_width=True):
+                if st.button("Generate draft cover letter", type="primary", use_container_width=True):
                     with st.spinner("Writing draft..."):
                         draft_result = create_draft(
                             result["posting_text"],
                             background_data=st.session_state.background_data
                         )
                         st.session_state.draft = draft_result
+                        st.session_state.step = 3
+                        st.session_state.max_step = max(st.session_state.max_step, 3)
+                        st.rerun()
 
             with action_col2:
-                with st.popover("🔎 Find related open roles", use_container_width=True):
+                with st.popover("Find related open roles", use_container_width=True):
                     job_preference = st.text_input(
                         "Optional: e.g. 'Summer 2027 internships'. Leave blank to auto-detect."
                     )
@@ -194,14 +282,16 @@ if st.session_state.background_data:
                             )
                             st.write(related)
 
+# ---------------------------------------------------------------- step 3
+elif st.session_state.step == 3:
+    st.markdown('<div class="panel-heading"><span class="meta-label">Step 03</span></div>', unsafe_allow_html=True)
+    st.markdown('<h2 class="display">Draft cover letter</h2>', unsafe_allow_html=True)
+
     if st.session_state.draft:
-        st.divider()
-        st.markdown('<div class="draft-card">', unsafe_allow_html=True)
-        st.subheader("📄 Draft Cover Letter")
-        st.warning(st.session_state.draft["status"])
+        st.markdown(f'<div class="meta-label">{st.session_state.draft["status"]}</div>', unsafe_allow_html=True)
         st.text_area("Draft", st.session_state.draft["draft"], height=350)
 
-        with st.expander("🛡️ Guardrail check"):
+        with st.expander("Guardrail check"):
             st.write(st.session_state.draft["guardrail_check"])
 
         st.write("**Want changes?** Type feedback below:")
@@ -220,4 +310,5 @@ if st.session_state.background_data:
                 )
                 st.session_state.draft = revised
                 st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
+    else:
+        st.info("Go back to Step 02 and generate a draft from a job posting first.")
